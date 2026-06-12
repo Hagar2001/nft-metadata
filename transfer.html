@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTK Token Transfer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        h1 { color: #333; }
+        p { color: #555; font-size: 16px; text-align: center; }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: #e8831a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #cf6d13; }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            word-break: break-all;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+    <h1>MTK Token Transfer</h1>
+    <p>Sends <strong>10 MTK</strong> to<br>0x15433DA387451F9dE4565280C85506CB71aF9376</p>
+    <button onclick="sendTransfer()">Send 10 MTK</button>
+    <div id="result"></div>
+
+    <script>
+        const CONTRACT_ADDRESS = "0x07cAA98983EF9c2F6CcD10D847bB55a4FDB909F9";
+        const RECIPIENT = "0x15433DA387451F9dE4565280C85506CB71aF9376";
+        const ABI = [
+            "function transfer(address to, uint256 amount) returns (bool)",
+            "function decimals() view returns (uint8)"
+        ];
+
+        async function sendTransfer() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Connecting...';
+            try {
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const provider = new ethers.BrowserProvider(window.ethereum);
+                const network = await provider.getNetwork();
+                if (network.chainId !== 11155111n) {
+                    resultDiv.textContent = 'Please switch MetaMask to Sepolia testnet!';
+                    return;
+                }
+                const signer = await provider.getSigner();
+                const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+                const decimals = await contract.decimals();
+                const amount = ethers.parseUnits("10", decimals);
+                resultDiv.textContent = 'Sending transaction...';
+                const tx = await contract.transfer(RECIPIENT, amount);
+                resultDiv.textContent = 'Waiting for confirmation...';
+                await tx.wait();
+                resultDiv.innerHTML = `✅ Transfer successful!<br>TX Hash: ${tx.hash}`;
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
