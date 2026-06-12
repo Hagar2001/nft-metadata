@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTK Token Balance</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        h1 { color: #333; }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: #e8831a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #cf6d13; }
+        #result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>MTK Token Balance</h1>
+    <button onclick="getBalance()">Get My MTK Balance</button>
+    <div id="result"></div>
+
+    <script>
+        const CONTRACT_ADDRESS = "0x07cAA98983EF9c2F6CcD10D847bB55a4FDB909F9";
+        const ABI = [
+            "function balanceOf(address account) view returns (uint256)",
+            "function decimals() view returns (uint8)",
+            "function symbol() view returns (string)"
+        ];
+
+        async function getBalance() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Loading...';
+            try {
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const provider = new ethers.BrowserProvider(window.ethereum);
+                const network = await provider.getNetwork();
+                if (network.chainId !== 11155111n) {
+                    resultDiv.textContent = 'Please switch MetaMask to Sepolia testnet!';
+                    return;
+                }
+                const signer = await provider.getSigner();
+                const address = await signer.getAddress();
+                const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+                const balance = await contract.balanceOf(address);
+                const decimals = await contract.decimals();
+                const symbol = await contract.symbol();
+                const formatted = ethers.formatUnits(balance, decimals);
+                resultDiv.innerHTML = `Account: ${address}<br>Balance: ${formatted} ${symbol}`;
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
